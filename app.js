@@ -66,16 +66,17 @@ async function fetchPexels(query) {
 }
 
 async function hydrateImages(items, onResolve) {
-  for (const item of items) {
-    if (itemImage(item)) { onResolve(item); continue; }
+  // Parallel fetch so all photos arrive together rather than one-by-one.
+  await Promise.all(items.map(async (item) => {
+    if (itemImage(item)) { onResolve(item); return; }
     try {
       const photo = await fetchPexels(item.query);
-      if (!photo) continue;
-      imgCache[item.id] = { url: photo.src.large, photographer: photo.photographer };
+      if (!photo) return;
+      imgCache[item.id] = { url: photo.src.medium, photographer: photo.photographer };
       localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imgCache));
       onResolve(item);
     } catch (_) { /* keep the SVG fallback */ }
-  }
+  }));
 }
 
 function mediaHTML(item, seed) {
