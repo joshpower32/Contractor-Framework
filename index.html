@@ -123,6 +123,7 @@
                 </ul>
             </div>
             <form class="quote-form" id="quoteForm">
+                <input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" style="display:none !important" aria-hidden="true">
                 <div class="field"><label>Name<input name="name" required></label></div>
                 <div class="field-row">
                     <div class="field"><label>Email<input type="email" name="email" required></label></div>
@@ -143,7 +144,7 @@
                 <div class="field"><label>Preferred start<input type="date" name="date"></label></div>
                 <div class="field"><label>Project details<textarea name="message" rows="3" placeholder="Tell us what you have in mind…"></textarea></label></div>
                 <button type="submit" class="btn btn-primary btn-block">Send my request</button>
-                <p class="fineprint" id="quoteNote">Demo form — submissions aren’t sent yet. See the README for wiring this to email or Firebase.</p>
+                <p class="fineprint" id="quoteNote">We’ll only use your details to reply about your project — no spam.</p>
             </form>
         </div>
     </section>

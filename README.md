@@ -38,3 +38,14 @@ python3 -m http.server 5520   # then open http://localhost:5520
 - Pexels photos are demo placeholders (free key, same as the other frameworks); cached in
   `localStorage`. Replace with the client's real project photos when sold.
 - Hosting upgrade path for paying clients: Netlify / Cloudflare Pages + custom domain.
+
+## Selling this site to a client (lead delivery)
+
+The quote form is wired to **Web3Forms** so leads email the client automatically.
+
+1. Go to [web3forms.com](https://web3forms.com) and enter the **client's email** → copy the access key they receive.
+2. Paste it into `CONFIG.web3formsKey` in `app.js` (replace `YOUR_WEB3FORMS_ACCESS_KEY`).
+3. Set `CONFIG.contactEmail` to the client's email too (used as the fallback + on errors).
+4. Submit a test from the live site and confirm the client gets the `🔔 NEW LEAD` email (tell them to mark it "not junk" once).
+
+Tip: keep all client keys under your own Web3Forms account so you can manage them, or create the key in the client's own account if they want to own it. Free tier = 250 submissions/month per key.

@@ -13,6 +13,13 @@ const CONFIG = {
   // Free demo photos via Pexels. Replace with your own key from https://www.pexels.com/api/
   pexelsKey: "4SuTxTJkprUsJAP1CZoSkd412wKx4EuXt7xfK5HzZf9DreiCe8Wv0twm",
   heroQuery: "modern kitchen renovation",
+  // === LEAD DELIVERY (set this before selling the site) ===============
+  // Get a FREE key at https://web3forms.com — enter the client's email, then
+  // paste the key here. Quote requests then email the client automatically.
+  // Until it's set, the form opens the visitor's email app as a fallback.
+  web3formsKey: "YOUR_WEB3FORMS_ACCESS_KEY",
+  contactEmail: "hello@northwoodreno.example", // fallback recipient + shown on errors
+  businessName: "Northwood Renovations",
 };
 
 const SERVICES = [
@@ -210,18 +217,41 @@ galleryEl.addEventListener("keydown", (e) => {
 });
 lightbox.addEventListener("click", (e) => { if (e.target !== lightboxImg) closeLightbox(); });
 
-// --- Quote form ---------------------------------------------------------
-document.getElementById("quoteForm").addEventListener("submit", (e) => {
+// --- Quote form (real delivery via Web3Forms) ---------------------------
+const KEY_PLACEHOLDER = "YOUR_WEB3FORMS_ACCESS_KEY";
+document.getElementById("quoteForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  // === WIRE UP REAL DELIVERY HERE ====================================
-  // Easiest: point the form at Formspree (https://formspree.io) — set the
-  // form's action/method and remove this handler. Or POST to a Firebase
-  // Cloud Function / Firestore "leads" collection.
-  // ===================================================================
-  const name = new FormData(e.target).get("name") || "";
-  e.target.reset();
-  toast(`Thanks ${String(name).split(" ")[0]} — we’ll be in touch within 1 business day!`);
-  document.getElementById("quoteNote").textContent = "Demo: your request was captured locally. Wire to email/Firebase for real delivery (see README).";
+  const form = e.target;
+  const fd = new FormData(form);
+  const firstName = String(fd.get("name") || "there").split(" ")[0];
+  const note = document.getElementById("quoteNote");
+  const btn = form.querySelector('button[type="submit"]');
+
+  // No key yet → open the visitor's email app so no lead is ever lost.
+  if (!CONFIG.web3formsKey || CONFIG.web3formsKey === KEY_PLACEHOLDER) {
+    const subject = encodeURIComponent(`New quote request — ${fd.get("name") || ""}`);
+    const body = encodeURIComponent([...fd.entries()].filter(([k]) => k !== "botcheck").map(([k, v]) => `${k}: ${v}`).join("\n"));
+    window.location.href = `mailto:${CONFIG.contactEmail}?subject=${subject}&body=${body}`;
+    toast("Opening your email app to send your request…");
+    return;
+  }
+
+  fd.append("access_key", CONFIG.web3formsKey);
+  fd.append("subject", `🔔 NEW LEAD — Quote request from ${fd.get("name") || "website"}`);
+  fd.append("from_name", CONFIG.businessName);
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = "Sending…";
+  try {
+    const res = await fetch("https://api.web3forms.com/submit", { method: "POST", headers: { Accept: "application/json" }, body: fd });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      form.reset();
+      toast(`Thanks ${firstName} — we’ll be in touch within 1 business day!`);
+      if (note) note.textContent = "Request sent ✓ — we’ll reply by email shortly.";
+    } else { throw new Error(data.message || "Send failed"); }
+  } catch (_) {
+    toast(`Couldn’t send — please email ${CONFIG.contactEmail}.`);
+    if (note) note.textContent = `Something went wrong sending the form. Please email ${CONFIG.contactEmail} directly.`;
+  } finally { btn.disabled = false; btn.textContent = orig; }
 });
 
 // --- Mobile nav + misc --------------------------------------------------
