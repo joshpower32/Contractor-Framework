@@ -16,12 +16,24 @@ const CONFIG = {
 };
 
 const SERVICES = [
-  { id: "kitchens",  name: "Kitchens",         desc: "Custom cabinetry, countertops, and full kitchen remodels.",        query: "modern kitchen interior" },
-  { id: "bathrooms", name: "Bathrooms",        desc: "Spa-like ensuites, tiled showers, and accessible bathrooms.",      query: "renovated bathroom" },
-  { id: "basements", name: "Basements",        desc: "Finished basements, in-law suites, and legal apartments.",         query: "finished basement" },
-  { id: "additions", name: "Additions",        desc: "Home additions, second storeys, and structural builds.",          query: "home construction framing" },
-  { id: "decks",     name: "Decks & Outdoor",  desc: "Decks, fences, pergolas, and outdoor living spaces.",              query: "wooden deck backyard" },
-  { id: "roofing",   name: "Roofing & Siding", desc: "Roof replacement, siding, soffit, and fascia.",                    query: "house roofing" },
+  { id: "kitchens",  name: "Kitchens",         desc: "Custom cabinetry, countertops, and full kitchen remodels.",        query: "modern kitchen interior",
+    lead: "From a fresh facelift to a full gut-and-rebuild, we design and build kitchens that work as good as they look.",
+    points: ["Custom cabinetry and built-in storage", "Quartz, granite, and butcher-block countertops", "Tile backsplashes and under-cabinet lighting", "Plumbing, electrical, and appliance install", "Islands, pantries, and open-concept layouts"] },
+  { id: "bathrooms", name: "Bathrooms",        desc: "Spa-like ensuites, tiled showers, and accessible bathrooms.",      query: "renovated bathroom",
+    lead: "Turn a dated bathroom into a spa-like retreat — or a safe, accessible space that works for every age.",
+    points: ["Custom tiled and glass walk-in showers", "Freestanding tubs and double vanities", "Heated floors and modern fixtures", "Accessible and barrier-free designs", "Full waterproofing done right"] },
+  { id: "basements", name: "Basements",        desc: "Finished basements, in-law suites, and legal apartments.",         query: "finished basement",
+    lead: "Unlock a whole extra floor — for the family, for guests, or as a legal income suite.",
+    points: ["Finished family and rec rooms", "Legal second-unit / in-law suites", "Bathrooms, kitchenettes, and wet bars", "Egress windows, insulation, and waterproofing", "Permits and code compliance handled"] },
+  { id: "additions", name: "Additions",        desc: "Home additions, second storeys, and structural builds.",          query: "home construction framing",
+    lead: "Need more space without moving? We build additions that look like they were always there.",
+    points: ["Room and bump-out additions", "Full second-storey builds", "Garage builds and conversions", "Structural engineering and permits", "Seamless rooflines and matching exteriors"] },
+  { id: "decks",     name: "Decks & Outdoor",  desc: "Decks, fences, pergolas, and outdoor living spaces.",              query: "wooden deck backyard",
+    lead: "Make the most of your yard with outdoor living spaces built to last Canadian seasons.",
+    points: ["Composite and pressure-treated decks", "Pergolas, gazebos, and privacy screens", "Fences and gates", "Interlock patios and walkways", "Built-in seating and planters"] },
+  { id: "roofing",   name: "Roofing & Siding", desc: "Roof replacement, siding, soffit, and fascia.",                    query: "house roofing",
+    lead: "Protect and refresh the outside of your home with durable, warrantied roofing and siding.",
+    points: ["Full roof replacement and repairs", "Vinyl, fibre-cement, and board-and-batten siding", "Soffit, fascia, and eavestrough", "Attic ventilation and ice-dam prevention", "Manufacturer-backed warranties"] },
 ];
 
 // Project gallery — cat drives the filter chips
@@ -105,11 +117,45 @@ async function loadHero() {
 const servicesGrid = document.getElementById("servicesGrid");
 function renderServices() {
   servicesGrid.innerHTML = SERVICES.map((s, i) => `
-    <article class="service-card">
+    <article class="service-card" data-service="${s.id}" role="button" tabindex="0" aria-label="${esc(s.name)} — view details">
       <div class="service-media" data-id="${s.id}">${mediaHTML(s, i + 1)}</div>
-      <div class="service-body"><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p></div>
+      <div class="service-body"><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p><span class="service-more">View details →</span></div>
     </article>`).join("");
+  servicesGrid.querySelectorAll(".service-card[data-service]").forEach((c) => {
+    const open = () => openService(c.dataset.service);
+    c.addEventListener("click", open);
+    c.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
 }
+
+// --- Service detail modal ----------------------------------------------
+function openService(id) {
+  const s = SERVICES.find((x) => x.id === id);
+  if (!s) return;
+  const modal = document.getElementById("serviceModal");
+  document.getElementById("serviceModalBody").innerHTML = `
+    <div class="sm-media">${mediaHTML(s, 1)}</div>
+    <div class="sm-body">
+      <h3>${esc(s.name)}</h3>
+      <p class="sm-lead">${esc(s.lead || s.desc)}</p>
+      <h4>What’s included</h4>
+      <ul class="sm-list">${(s.points || []).map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+      <div class="sm-actions">
+        <button class="btn btn-primary" id="smQuote">Get a free quote</button>
+        <button class="btn btn-ghost" id="smProjects">See our projects</button>
+      </div>
+    </div>`;
+  document.getElementById("smQuote").addEventListener("click", () => { closeService(); document.getElementById("contact").scrollIntoView({ behavior: "smooth" }); });
+  document.getElementById("smProjects").addEventListener("click", () => { closeService(); document.getElementById("projects").scrollIntoView({ behavior: "smooth" }); });
+  modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden";
+}
+function closeService() {
+  const modal = document.getElementById("serviceModal");
+  modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true"); document.body.style.overflow = "";
+}
+document.getElementById("serviceClose").addEventListener("click", closeService);
+document.getElementById("serviceModal").addEventListener("click", (e) => { if (e.target.id === "serviceModal") closeService(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeService(); });
 function updateServiceMedia(s) {
   const el = document.querySelector(`.service-media[data-id="${s.id}"]`);
   if (el) el.innerHTML = mediaHTML(s, 1);

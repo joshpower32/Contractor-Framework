@@ -100,6 +100,27 @@ h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 800; line-height: 1
 .service-body { padding: 18px 18px 20px; }
 .service-body h3 { font-size: 1.15rem; margin: 0 0 .4rem; }
 .service-body p { margin: 0; color: var(--muted); font-size: .94rem; }
+.service-card[data-service] { cursor: pointer; }
+.service-card[data-service]:hover, .service-card[data-service]:focus-visible { border-color: var(--brand); outline: none; }
+.service-more { display: inline-block; margin-top: 12px; font-size: .85rem; font-weight: 700; color: var(--brand); }
+
+/* ---------- Service detail modal ---------- */
+.modal { position: fixed; inset: 0; z-index: 2100; background: rgba(0,0,0,.72); display: none; align-items: flex-start; justify-content: center; padding: 28px 16px; overflow-y: auto; }
+.modal.open { display: flex; }
+.modal-card { position: relative; background: var(--surface); border-radius: var(--radius); width: min(560px, 100%); box-shadow: var(--shadow-md); overflow: hidden; }
+.modal-close { position: absolute; top: 10px; right: 12px; z-index: 2; background: rgba(255,255,255,.92); border: 1px solid var(--line); width: 34px; height: 34px; border-radius: 50%; font-size: 1.4rem; line-height: 1; cursor: pointer; color: var(--ink); }
+.modal-close:hover { color: var(--brand); }
+.sm-media { aspect-ratio: 16 / 9; background: var(--tint); }
+.sm-media svg, .sm-media img { width: 100%; height: 100%; object-fit: cover; }
+.sm-body { padding: 22px 24px 26px; }
+.sm-body h3 { font-size: 1.5rem; margin: 0 0 .4rem; }
+.sm-lead { color: var(--muted); margin: 0 0 16px; }
+.sm-body h4 { font-size: .82rem; text-transform: uppercase; letter-spacing: .08em; color: var(--brand); margin: 0 0 8px; }
+.sm-list { list-style: none; padding: 0; margin: 0 0 22px; }
+.sm-list li { padding: 8px 0 8px 26px; position: relative; border-top: 1px solid var(--line); font-size: .94rem; }
+.sm-list li:first-child { border-top: none; }
+.sm-list li::before { content: "✓"; position: absolute; left: 0; color: var(--brand); font-weight: 800; }
+.sm-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* ---------- Filters ---------- */
 .filters { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; margin-bottom: 28px; }
