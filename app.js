@@ -10,8 +10,6 @@
    ===================================================================== */
 
 const CONFIG = {
-  // Free demo photos via Pexels. Replace with your own key from https://www.pexels.com/api/
-  pexelsKey: "4SuTxTJkprUsJAP1CZoSkd412wKx4EuXt7xfK5HzZf9DreiCe8Wv0twm",
   heroQuery: "modern kitchen renovation",
   // === LEAD DELIVERY (set this before selling the site) ===============
   // Get a FREE key at https://web3forms.com — enter the client's email, then
@@ -56,9 +54,33 @@ const PROJECTS = [
   { id: "p9", title: "Rec room & wet bar",       cat: "Basements", query: "basement bar" },
 ];
 
+// --- Demo photos: pinned Pexels shots, keyed by each item's `query` -----
+// Direct image URLs load with the page — no API call, no key, no pop-in.
+// To change a photo: browse pexels.com, copy the image address, paste here.
+const PEXELS_PHOTOS = {
+  "modern kitchen interior": { u: "https://images.pexels.com/photos/7045356/pexels-photo-7045356.jpeg", p: "Max Vakhtbovych" },
+  "renovated bathroom": { u: "https://images.pexels.com/photos/35493890/pexels-photo-35493890.jpeg", p: "Peter  Vang" },
+  "finished basement": { u: "https://images.pexels.com/photos/35493895/pexels-photo-35493895.jpeg", p: "Peter  Vang" },
+  "home construction framing": { u: "https://images.pexels.com/photos/37627682/pexels-photo-37627682.jpeg", p: "D Goug" },
+  "wooden deck backyard": { u: "https://images.pexels.com/photos/9056671/pexels-photo-9056671.jpeg", p: "Matheus Bertelli" },
+  "house roofing": { u: "https://images.pexels.com/photos/29114658/pexels-photo-29114658.jpeg", p: "Jan van der Wolf" },
+  "white kitchen renovation": { u: "https://images.pexels.com/photos/36511379/pexels-photo-36511379.jpeg", p: "Lee Salem" },
+  "tiled bathroom shower": { u: "https://images.pexels.com/photos/4258278/pexels-photo-4258278.jpeg", p: "Curtis Adams" },
+  "basement living room": { u: "https://images.pexels.com/photos/35493891/pexels-photo-35493891.jpeg", p: "Peter  Vang" },
+  "backyard cedar deck": { u: "https://images.pexels.com/photos/36220309/pexels-photo-36220309.jpeg", p: "Alec Adriano" },
+  "kitchen island quartz": { u: "https://images.pexels.com/photos/8089193/pexels-photo-8089193.jpeg", p: "Max Vakhtbovych" },
+  "modern bathroom vanity": { u: "https://images.pexels.com/photos/6238612/pexels-photo-6238612.jpeg", p: "Max Vakhtbovych" },
+  "house addition construction": { u: "https://images.pexels.com/photos/28885519/pexels-photo-28885519.jpeg", p: "Brett Jordan" },
+  "pergola patio": { u: "https://images.pexels.com/photos/13871294/pexels-photo-13871294.jpeg", p: "Matheus Bertelli" },
+  "basement bar": { u: "https://images.pexels.com/photos/36777947/pexels-photo-36777947.jpeg", p: "Curtis Adams" },
+  "modern kitchen renovation": { u: "https://images.pexels.com/photos/36035073/pexels-photo-36035073.jpeg", p: "Valentin Ivantsov" },
+};
+// Size an image via Pexels CDN params (w = target width in px)
+const px = (u, w) => `${u}?auto=compress&cs=tinysrgb&w=${w}`;
+
 const esc = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-// --- SVG fallback placeholder (shown while a photo loads / if offline) -
+// --- SVG fallback placeholder (shown if a photo fails to load) ---------
 function placeholderSVG(seed = 0) {
   const h = (seed * 47) % 360;
   return `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Project photo placeholder">
@@ -70,54 +92,21 @@ function placeholderSVG(seed = 0) {
   </svg>`;
 }
 
-// --- Pexels image cache (shared pattern with flower-shop) --------------
-const IMG_CACHE_KEY = "northwood_imgcache";
-let imgCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}");
-const itemImage = (item) => item.image || imgCache[item.id]?.url || null;
-
-async function fetchPexels(query) {
-  const res = await fetch(
-    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
-    { headers: { Authorization: CONFIG.pexelsKey } }
-  );
-  if (!res.ok) return null;
-  return (await res.json()).photos?.[0] || null;
-}
-
-async function hydrateImages(items, onResolve) {
-  // Parallel fetch so all photos arrive together rather than one-by-one.
-  await Promise.all(items.map(async (item) => {
-    if (itemImage(item)) { onResolve(item); return; }
-    try {
-      const photo = await fetchPexels(item.query);
-      if (!photo) return;
-      imgCache[item.id] = { url: photo.src.medium, photographer: photo.photographer };
-      localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imgCache));
-      onResolve(item);
-    } catch (_) { /* keep the SVG fallback */ }
-  }));
-}
+// --- Item imagery: real photo > pinned Pexels photo > SVG fallback ------
+const itemImage = (item, w = 640) =>
+  item.image || (PEXELS_PHOTOS[item.query] ? px(PEXELS_PHOTOS[item.query].u, w) : null);
 
 function mediaHTML(item, seed) {
   const url = itemImage(item);
-  const credit = imgCache[item.id]?.photographer;
-  if (url) return `<img src="${esc(url)}" alt="${esc(item.name || item.title)}"${credit ? ` title="Photo: ${esc(credit)} / Pexels"` : ""} loading="lazy">`;
+  const credit = !item.image && PEXELS_PHOTOS[item.query]?.p;
+  if (url) return `<img src="${esc(url)}" alt="${esc(item.name || item.title)}"${credit ? ` title="Photo: ${esc(credit)} / Pexels"` : ""} loading="lazy" onerror="this.outerHTML = placeholderSVG(${seed})">`;
   return placeholderSVG(seed);
 }
 
 // --- Hero background ----------------------------------------------------
-async function loadHero() {
-  const hero = document.getElementById("hero");
-  const cached = imgCache["__hero"]?.url;
-  if (cached) { hero.style.backgroundImage = `url("${cached}")`; return; }
-  try {
-    const photo = await fetchPexels(CONFIG.heroQuery);
-    if (photo) {
-      imgCache["__hero"] = { url: photo.src.landscape, photographer: photo.photographer };
-      localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imgCache));
-      hero.style.backgroundImage = `url("${photo.src.landscape}")`;
-    }
-  } catch (_) { /* dark fallback colour stays */ }
+function loadHero() {
+  const ph = PEXELS_PHOTOS[CONFIG.heroQuery];
+  if (ph) document.getElementById("hero").style.backgroundImage = `url("${px(ph.u, 1600)}")`;
 }
 
 // --- Render: services ---------------------------------------------------
@@ -163,10 +152,6 @@ function closeService() {
 document.getElementById("serviceClose").addEventListener("click", closeService);
 document.getElementById("serviceModal").addEventListener("click", (e) => { if (e.target.id === "serviceModal") closeService(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeService(); });
-function updateServiceMedia(s) {
-  const el = document.querySelector(`.service-media[data-id="${s.id}"]`);
-  if (el) el.innerHTML = mediaHTML(s, 1);
-}
 
 // --- Render: projects gallery + filters ---------------------------------
 const galleryEl = document.getElementById("projectGallery");
@@ -183,19 +168,10 @@ function renderFilters() {
 function renderGallery() {
   const list = PROJECTS.filter((p) => activeCat === "All" || p.cat === activeCat);
   galleryEl.innerHTML = list.map((p, i) => `
-    <figure class="gallery-item" data-id="${p.id}" data-full="${esc(itemImage(p) || "")}" tabindex="0" role="button" aria-label="View ${esc(p.title)}">
+    <figure class="gallery-item" data-id="${p.id}" data-full="${esc(itemImage(p, 1600) || "")}" tabindex="0" role="button" aria-label="View ${esc(p.title)}">
       ${mediaHTML(p, i + 1)}
       <figcaption class="gallery-cap">${esc(p.title)}</figcaption>
     </figure>`).join("");
-}
-function updateProjectMedia(p) {
-  // Update any visible card for this project (it may be filtered out)
-  const el = galleryEl.querySelector(`.gallery-item[data-id="${p.id}"]`);
-  if (el) {
-    el.querySelector("svg, img")?.remove();
-    el.insertAdjacentHTML("afterbegin", mediaHTML(p, 1));
-    el.dataset.full = itemImage(p) || "";
-  }
 }
 
 // --- Lightbox -----------------------------------------------------------
@@ -279,5 +255,3 @@ renderServices();
 renderFilters();
 renderGallery();
 loadHero();
-hydrateImages(SERVICES, updateServiceMedia);
-hydrateImages(PROJECTS, (p) => { updateProjectMedia(p); });
